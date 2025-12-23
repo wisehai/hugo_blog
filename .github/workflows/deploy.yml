@@ -1,0 +1,47 @@
+name: Deploy Hugo to username.github.io
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  HUGO_VERSION: "0.153.2"
+  PUBLISH_REPO: "wisehai/wisehai.github.io"
+  PUBLISH_BRANCH: "main"
+  CNAME_DOMAIN: "www.wisehai.com"
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: ${{ env.HUGO_VERSION }}
+          extended: true
+
+      - name: Build
+        run: hugo --minify
+
+      - name: Add CNAME
+        run: echo "${{ env.CNAME_DOMAIN }}" > public/CNAME
+
+      - name: Deploy to publish repo
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          external_repository: ${{ env.PUBLISH_REPO }}
+          publish_branch: ${{ env.PUBLISH_BRANCH }}
+          publish_dir: ./public
+          personal_token: ${{ secrets.PUBLISH_TOKEN }}
+          user_name: github-actions[bot]
+          user_email: github-actions[bot]@users.noreply.github.com
